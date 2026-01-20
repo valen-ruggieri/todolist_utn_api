@@ -5,6 +5,7 @@ const { connectDB, closeDB } = require('./config/database');
 const app = express();
 const PORT = process.env.PORT || 3000;
 const authRoutes = require('./routes/authroutes');
+const todosRoutes = require('./routes/todosRoutes');
 
 app.use(cors());
 app.use(express.json());
@@ -23,6 +24,7 @@ app.use((err, req, res, next) => {
 });
 
 app.use("/api/auth", authRoutes);
+app.use("/api/todos", todosRoutes);
 
 
 async function startServer() {

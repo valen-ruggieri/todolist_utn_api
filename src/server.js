@@ -2,10 +2,9 @@ const express = require('express');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const { connectDB, closeDB } = require('./config/database');
-const userRoutes = require('./routes/userRoutes');
 const app = express();
 const PORT = process.env.PORT || 3000;
-
+const authRoutes = require('./routes/authroutes');
 
 app.use(cors());
 app.use(express.json());
@@ -17,13 +16,13 @@ app.get('/', (req, res) => {
   res.json({ message: 'API de Todolist UTN' });
 });
 
-// Manejo de errores
+
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ error: 'Algo salió mal!' });
 });
 
-app.use("/api/users", userRoutes);
+app.use("/api/auth", authRoutes);
 
 
 async function startServer() {

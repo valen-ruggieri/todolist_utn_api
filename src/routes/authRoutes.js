@@ -1,16 +1,16 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const User = require('../models/user.js');
+const { sendSuccess, sendError } = require('../utils/responseHelper');
 
 const router = express.Router();
 
-
-router.post("/register", async (req, res) => {
+router.post('/register', async (req, res) => {
   try {
     const { name, email, password } = req.body;
 
     const existe = await User.findOne({ email });
-    if (existe) return res.status(400).json({ error: "Usuario ya existe" });
+    if (existe) return sendError(res, 'Usuario ya existe', 409, 'USER_ALREADY_EXISTS');
 
     const user = await User.create({ name, email, password });
 
@@ -20,23 +20,22 @@ router.post("/register", async (req, res) => {
       { expiresIn: process.env.JWT_EXPIRE }
     );
 
-    res.json({ token, user: { id: user._id, name: user.name, email: user.email } });
-
+    res.location(`/api/users/${user._id}`);
+    return sendSuccess(res, { token, user: { id: user._id, name: user.name, email: user.email } }, 201);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    return sendError(res, error.message, 500, 'INTERNAL_ERROR');
   }
 });
 
-
-router.post("/login", async (req, res) => {
+router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
 
     const user = await User.findOne({ email });
-    if (!user) return res.status(400).json({ error: "Credenciales incorrectas" });
+    if (!user) return sendError(res, 'Credenciales incorrectas', 401, 'INVALID_CREDENTIALS');
 
     const match = await user.matchPassword(password);
-    if (!match) return res.status(400).json({ error: "Credenciales incorrectas" });
+    if (!match) return sendError(res, 'Credenciales incorrectas', 401, 'INVALID_CREDENTIALS');
 
     const token = jwt.sign(
       { id: user._id },
@@ -44,10 +43,9 @@ router.post("/login", async (req, res) => {
       { expiresIn: process.env.JWT_EXPIRE }
     );
 
-    res.json({ token, user: { id: user._id, name: user.name, email: user.email } });
-
+    return sendSuccess(res, { token, user: { id: user._id, name: user.name, email: user.email } }, 200);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    return sendError(res, error.message, 500, 'INTERNAL_ERROR');
   }
 });
 

@@ -6,9 +6,24 @@ const authMiddleware = require('../middlewares/auth');
 
 const router = express.Router();
 
+function validatePassword(password) {
+  // Al menos 8 caracteres, una mayúscula, un número y un carácter especial
+  const re = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{8,}$/;
+  return re.test(password);
+}
+
 router.post('/register', async (req, res) => {
   try {
     const { name, email, password } = req.body;
+
+    if (!password || !validatePassword(password)) {
+      return sendError(
+        res,
+        'La contraseña debe tener al menos 8 caracteres, incluir una mayúscula, un número y un carácter especial',
+        422,
+        'WEAK_PASSWORD'
+      );
+    }
 
     const existe = await User.findOne({ email });
     if (existe) return sendError(res, 'Usuario ya existe', 409, 'USER_ALREADY_EXISTS');
@@ -52,19 +67,28 @@ router.post('/login', async (req, res) => {
 
 router.get('/profile', authMiddleware, async (req, res) => {
   try {
-
     return sendSuccess(res, req.user, 200);
   } catch (error) {
     return sendError(res, error.message, 500, 'INTERNAL_ERROR');
   }
 });
 
+
 router.put('/change-password', authMiddleware, async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
     if (!currentPassword || !newPassword) return sendError(res, 'Faltan campos', 400, 'MISSING_FIELDS');
 
-    // Recuperar usuario completo para verificar y guardar (incluye password)
+    if (!validatePassword(newPassword)) {
+      return sendError(
+        res,
+        'La nueva contraseña debe tener al menos 8 caracteres, incluir una mayúscula, un número y un carácter especial',
+        422,
+        'WEAK_PASSWORD'
+      );
+    }
+
+
     const user = await User.findById(req.user._id);
     if (!user) return sendError(res, 'Usuario no encontrado', 404, 'USER_NOT_FOUND');
 

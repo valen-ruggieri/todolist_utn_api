@@ -2,6 +2,7 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const User = require('../models/user.js');
 const { sendSuccess, sendError } = require('../utils/responseHelper');
+const authMiddleware = require('../middlewares/auth');
 
 const router = express.Router();
 
@@ -44,6 +45,36 @@ router.post('/login', async (req, res) => {
     );
 
     return sendSuccess(res, { token, user: { id: user._id, name: user.name, email: user.email } }, 200);
+  } catch (error) {
+    return sendError(res, error.message, 500, 'INTERNAL_ERROR');
+  }
+});
+
+router.get('/profile', authMiddleware, async (req, res) => {
+  try {
+
+    return sendSuccess(res, req.user, 200);
+  } catch (error) {
+    return sendError(res, error.message, 500, 'INTERNAL_ERROR');
+  }
+});
+
+router.put('/change-password', authMiddleware, async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) return sendError(res, 'Faltan campos', 400, 'MISSING_FIELDS');
+
+    // Recuperar usuario completo para verificar y guardar (incluye password)
+    const user = await User.findById(req.user._id);
+    if (!user) return sendError(res, 'Usuario no encontrado', 404, 'USER_NOT_FOUND');
+
+    const match = await user.matchPassword(currentPassword);
+    if (!match) return sendError(res, 'Contraseña actual incorrecta', 401, 'INVALID_CREDENTIALS');
+
+    user.password = newPassword;
+    await user.save();
+
+    return sendSuccess(res, { message: 'Contraseña actualizada correctamente' }, 200);
   } catch (error) {
     return sendError(res, error.message, 500, 'INTERNAL_ERROR');
   }

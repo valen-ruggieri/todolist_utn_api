@@ -2,6 +2,8 @@ const express = require('express');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const { connectDB, closeDB } = require('./config/database');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 const app = express();
 const PORT = process.env.PORT || 3000;
 const authRoutes = require('./routes/authroutes');
@@ -11,6 +13,16 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+app.use(helmet());
+
+// Rate limiter para endpoints de auth (protege login/register)
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 10, // 10 requests por IP por ventana
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, error: { message: 'Demasiadas solicitudes, inténtalo más tarde', code: 'TOO_MANY_REQUESTS' } }
+});
 
 
 app.get('/', (req, res) => {
@@ -18,7 +30,7 @@ app.get('/', (req, res) => {
 });
 
 
-app.use("/api/auth", authRoutes);
+app.use("/api/auth", authLimiter, authRoutes);
 app.use("/api/todos", todosRoutes);
 
 

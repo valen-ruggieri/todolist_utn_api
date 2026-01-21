@@ -15,10 +15,10 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(helmet());
 
-// Rate limiter para endpoints de auth (protege login/register)
+
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutos
-  max: 10, // 10 requests por IP por ventana
+  windowMs: 5 * 60 * 1000, 
+  max: 10, 
   standardHeaders: true,
   legacyHeaders: false,
   message: { success: false, error: { message: 'Demasiadas solicitudes, inténtalo más tarde', code: 'TOO_MANY_REQUESTS' } }

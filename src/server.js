@@ -6,7 +6,7 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const app = express();
 const PORT = process.env.PORT || 3000;
-const authRoutes = require('./routes/authroutes');
+const authRoutes = require('./routes/authRoutes');
 const todosRoutes = require('./routes/todosRoutes');
 
 app.use(cors());

@@ -4,7 +4,7 @@ const cookieParser = require('cookie-parser');
 const { connectDB, closeDB } = require('./config/database');
 const app = express();
 const PORT = process.env.PORT || 3000;
-const authRoutes = require('./routes/authRoutes');
+const authRoutes = require('./routes/authroutes');
 const todosRoutes = require('./routes/todosRoutes');
 
 app.use(cors());
@@ -18,23 +18,22 @@ app.get('/', (req, res) => {
 });
 
 
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ error: 'Algo salió mal!' });
-});
-
 app.use("/api/auth", authRoutes);
 app.use("/api/todos", todosRoutes);
 
 
+app.use((err, req, res, next) => {
+  console.error(err && err.stack ? err.stack : err);
+  res.status(500).json({ success: false, error: { message: 'Algo salió mal!', code: 'INTERNAL_ERROR' } });
+});
+
+
 async function startServer() {
   try {
-
     await connectDB();
-    
 
     app.listen(PORT, () => {
-      console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
+      console.log(`🚀 Servidor corriendo... `);
     });
   } catch (error) {
     console.error('❌ Error al iniciar el servidor:', error);
